@@ -14,12 +14,10 @@ Analyze data from FitBit users to uncover usage trends and provide data-driven r
 - Data visualization
 - R Markdown
 
-## 📁 Files in this folder:
-| File | Description |
-|------|-------------|
-| `CS02_BELLABEAT.Rmd` | Full analysis with code and narrative |
-| `CS02_BELLABEAT.html` | Rendered version of the analysis (easy viewing!) |
-| `dataCSV.zip` | Raw dataset used for the analysis |
+## 📁 Files in this repository :
+- `CS02_BELLABEAT.Rmd` : Full analysis with code and narrative 
+- `CS02_BELLABEAT.html` : Rendered version of the analysis (easy viewing!) 
+- `dataCSV.zip` : Raw dataset used for the analysis 
 
 ## 📌 Highlights
 - Cleaned and prepared real-world smart device data
@@ -34,4 +32,4 @@ Analyze data from FitBit users to uncover usage trends and provide data-driven r
 
 ---
 
-✨ Thank you for viewing my project! Feel free to check out other case studies in this repository 💖
+✨ Thank you for viewing my project! 💖
