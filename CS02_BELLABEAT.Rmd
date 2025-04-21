@@ -1,0 +1,608 @@
+---
+title: "CS_02_BELLABEAT"
+author: "RJLD"
+date: "2025-04-08"
+output: html_document
+---
+
+<!-- my dataset covers 4.12.16 to 5.12.16, sleep data is 4.12.16 to 5.12.16. These in csv format-->
+
+#INSTALL & LOAD PACKAGES
+Install the following packages first before running <!--removing code chunk for installpackageds coz can't knit-->
+install.packages("tidyverse")
+install.packages("here")
+install.packages("janitor")
+install.packages("skimr")
+install.packages("dplyr")
+install.packages("lubridate")
+install.packages("hms")
+
+
+
+```{r}
+library(tidyverse)
+library(here)
+library(janitor)
+library(skimr)
+library(dplyr)
+library(lubridate)
+library(hms)
+```
+
+#LOAD DATASET & DATA EXPLORE & VISUALIZE
+##DAILY
+###DAILY-LOAD
+```{r}
+daily_activity_A <- read.csv("D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/DAILY/dailyActivity_merged_3.12.16-4.11.16.csv", stringsAsFactors = FALSE)
+daily_activity_B <- read.csv("D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/DAILY/dailyActivity_merged_4.12.16-5.12.16.csv", stringsAsFactors = FALSE)
+sleep_day_B <- read.csv("D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/DAILY/sleepDay_merged_4.12.16-5.12.16.csv", stringsAsFactors = FALSE)
+```
+###DAILY-CLEAN
+head()
+```{r}
+head(daily_activity_A)
+head(daily_activity_B)
+head(sleep_day_B)#replace daily_activity_A w/ daily_activity_B and w/ sleep_day_B
+#Findings - ActivityDate is chr not datetime format
+```
+Number of Unique participants:
+```{r}
+n_distinct(daily_activity_A)#replace daily_activity_A w/ daily_activity_B and w/ sleep_day_B
+nrow(daily_activity_A)
+```
+####Clean ->
+remove duplicated rows:
+```{r}
+daily_activity_A <- daily_activity_A[!duplicated(daily_activity_A), ]
+daily_activity_B <- daily_activity_B[!duplicated(daily_activity_B), ]
+sleep_day_B <- sleep_day_B[!duplicated(sleep_day_B), ]
+#no duplicated values found
+```
+Handle missing values:
+```{r}
+colSums(is.na(daily_activity_A))
+colSums(is.na(daily_activity_B))
+colSums(is.na(sleep_day_B))# replace a,b, sleep
+#no missing values found
+```
+Convert data types:
+```{r}
+daily_activity_A$ActivityDate <- as.Date(daily_activity_A$ActivityDate, format = "%m/%d/%Y")
+daily_activity_B$ActivityDate <- as.Date(daily_activity_B$ActivityDate, format = "%m/%d/%Y")
+sleep_day_B$SleepDay <- as.Date(sleep_day_B$SleepDay, format = "%m/%d/%Y %H:%M:%S" )
+#converted chr to date
+```
+
+Quick Summary Stats:
+```{r}
+summary_daily_activity_A <- daily_activity_A %>%
+    summary()
+
+summary_daily_activity_B <-daily_activity_B %>% 
+    summary()
+
+summary_sleep_day_B <-sleep_day_B %>%
+  select(TotalSleepRecords,
+  TotalMinutesAsleep,
+  TotalTimeInBed) %>%
+    summary()
+```
+Save summary stats
+```{r}
+write.csv(summary_daily_activity_A, "D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/CLEANED/summary_daily_activity_A.csv")
+write.csv(summary_daily_activity_B, "D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/CLEANED/summary_daily_activity_B.csv")
+write.csv(summary_sleep_day_B, "D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/CLEANED/summary_sleep_day_B.csv")
+```
+View summary stats
+```{r}
+print(summary_sleep_day_B) #replace with wahat u want to view
+```
+
+
+####SAVE CLEANED FILES
+```{r}
+write.csv(daily_activity_A, "D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/CLEANED/daily_activity_A.csv", row.names = FALSE)
+write.csv(daily_activity_B, "D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/CLEANED/daily_activity_B.csv", row.names = FALSE)
+write.csv(daily_activity_A, "D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/CLEANED/sleep_day_B.csv", row.names = FALSE)
+```
+
+
+###DAILY-EXPLORATION & VISUALIZATION
+####Relationship bet steps taken in a day and sedentary minutes:
+```{r}
+ggplot(data = daily_activity_B, aes(x = TotalSteps, y = SedentaryMinutes, color = factor(Id))) + #replace with A and caption diff
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +  # Adds a linear regression line
+ # facet_wrap(~ Id, scales = "fixed") +  #add this line if gusto hiwahiwalay per unique id
+  labs(
+    title = "Steps Taken Daily vs. Sedentary Minutes",
+    caption = "Period: 04/12/2016 to 05/12/2016 Daily" ) + #if B
+    #caption = "Period: 03/11/2016 to 04/12/2016 Daily") + #if A
+  theme_minimal()
+```
+####Relationship bet. minutesofsleep & time in bed:
+```{r}
+ggplot(data=sleep_day_B, aes(x=TotalMinutesAsleep, y=TotalTimeInBed, color=factor(Id))) + 
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE, color = "black") +  # Adds a linear regression line
+  #facet_wrap(~ Id, scales = "fixed") +  #add this line if gusto hiwahiwalay per unique id
+  labs(
+    title="Total Minutes Asleep vs Total Time(minutes) in Bed",
+    caption="Period: 04/12/2016 to 05/12/2016 Daily"
+  ) +
+  theme_minimal()
+```
+
+###DAILY-MERGE
+```{r}
+daily_merged_B <- merge(sleep_day_B, 
+                        daily_activity_B, 
+                        by.x = c("Id", "SleepDay"),  # Columns in sleep_day_B
+                        by.y = c("Id", "ActivityDate"),  # Columns in daily_activity_B
+                        all = TRUE)  # Keep all rows from both data frames
+
+daily_merged_B <- daily_merged_B %>%
+  rename(Date = SleepDay)
+
+write.csv(daily_merged_B, "D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/CLEANED/daily_merged_B.csv", row.names = FALSE)
+```
+####check new table
+```{r}
+head(daily_merged_B)
+nrow(daily_merged_B)
+n_distinct(daily_merged_B)
+```
+
+####Relationship betweeen total steps and total minutes asleep
+```{r}
+ggplot(data=daily_merged_B, aes(x=TotalMinutesAsleep, y=TotalSteps, color=factor(Id)))+
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE, color = "black") +  # Adds a linear regression line
+  #facet_wrap(~ Id, scales = "fixed", ncol = 5) #if want hiwahiwalay
+  labs(
+    title="Total Minutes Asleep vs Total Steps",
+    caption="Period: 04/12/2016 to 05/12/2016 Daily"
+  ) +
+  theme_minimal()
+```
+####Very Active Minutes vs Sedentary Minutes
+```{r}
+ggplot(data = daily_merged_B, aes(x = VeryActiveMinutes, y = SedentaryMinutes, color=factor(Id))) +
+  geom_point() +
+  geom_smooth(method="lm", se = FALSE, color = "black") +
+  labs(
+    title = "Very Active Minutes vs Sedentary Minutes",
+    caption ="Period 04.12.2016 to 05.12.2016 Daily"
+  ) +
+  theme_minimal()
+```
+####Activity_Type Minutes boxplot
+```{r}
+activityMins_data <- daily_merged_B %>%
+  select(VeryActiveMinutes,FairlyActiveMinutes,LightlyActiveMinutes,SedentaryMinutes)
+
+# Reshape data from wide to long format
+library(tidyr)
+activity_data_long <- activityMins_data %>%
+  gather(key = "ActivityType", value = "Minutes")
+
+activity_data_long$ActivityType <- factor(activity_data_long$ActivityType,
+                                          levels = c("VeryActiveMinutes", "FairlyActiveMinutes", "LightlyActiveMinutes", "SedentaryMinutes"))
+
+# Create the boxplot
+ggplot(activity_data_long, aes(x = ActivityType, y = Minutes)) +
+  geom_boxplot() +
+  stat_summary(fun.data = "mean_sdl", geom = "text", 
+               aes(label = paste("Mean: ", round(..y.., 1))),
+               vjust = -1.5, size = 3) +  # Add mean label
+  stat_summary(fun = "median", geom = "text", 
+               aes(label = paste("Median: ", round(..y.., 1))),
+               vjust = 1.5, size = 3) +  # Add median label
+  theme_minimal() +
+  labs(title = "Activity Minutes Boxplot",
+       x = "Activity Type",
+       y = "Minutes",
+       caption="Period: 04.12.2016 to 05.12.2016 Daily")
+```
+####Activity_Type Distance boxplot
+```{r}
+activityDist_data <- daily_merged_B %>%
+  select(VeryActiveDistance,ModeratelyActiveDistance,LightActiveDistance,SedentaryActiveDistance)
+
+# Reshape data from wide to long format
+library(tidyr)
+activityD_data_long <- activityDist_data %>%
+  gather(key = "ActivityType", value = "KM")
+
+activityD_data_long$ActivityType <- factor(activityD_data_long$ActivityType,
+                                          levels = c("VeryActiveDistance","ModeratelyActiveDistance","LightActiveDistance","SedentaryActiveDistance"))
+
+# Create the boxplot
+ggplot(activityD_data_long, aes(x = ActivityType, y = KM)) +
+  geom_boxplot() +
+  stat_summary(fun.data = "mean_sdl", geom = "text", 
+               aes(label = paste("Mean: ", round(..y.., 1))),
+               vjust = -1.5, size = 3) +  # Add mean label
+  stat_summary(fun = "median", geom = "text", 
+               aes(label = paste("Median: ", round(..y.., 1))),
+               vjust = 1.5, size = 3) +  # Add median label
+  theme_minimal() +
+  labs(title = "Activity Distance Boxplot",
+       x = "Activity Type",
+       y = "KM",
+       caption="Period: 04.12.2016 to 05.12.2016 Daily")
+```
+
+####Total Distance vs Total Steps
+```{r}
+ggplot(data = daily_merged_B, aes(x = TotalDistance, y = TotalSteps, color=factor(Id))) +
+  geom_point() +
+  geom_smooth(method="lm", se = FALSE, color = "black") +
+  labs(
+    title = "Total Distance (km) vs Total Steps",
+    caption ="Period 04.12.2016 to 05.12.2016 Daily"
+  ) +
+  theme_minimal()
+```
+
+####Total Time Asleep vs Very Active MINUTES Faily Lightly sedentary (one-by-one)
+```{r}
+ggplot(data = daily_merged_B, aes(x = TotalMinutesAsleep, y = SedentaryMinutes, color=factor(Id))) + #replace y axis
+  geom_point() +
+  geom_smooth(method="auto", se = FALSE, color = "black") +
+  labs(
+    #title = "Total Time Asleep vs Very Active Minutes",
+    #title = "Total Time Asleep vs Faily Active Minutes",
+    #title = "Total Time Asleep vs Lightly Active Minutes",
+    title = "Total Time Asleep vs Sedentary Minutes",
+    caption ="Period 04.12.2016 to 05.12.2016 Daily"
+  ) +
+  theme_minimal()
+```
+
+####Total Time Asleep vs Very Active MINUTES, Faily, Lightly, sedentary (in one)
+```{r}
+activityM_long <- daily_merged_B %>%
+  select(Id, TotalMinutesAsleep, VeryActiveMinutes, FairlyActiveMinutes, LightlyActiveMinutes, SedentaryMinutes) %>%
+  pivot_longer(cols = c(VeryActiveMinutes, FairlyActiveMinutes, LightlyActiveMinutes, SedentaryMinutes),
+               names_to = "ActivityType", values_to = "ActivityMinutes")
+
+# Plot with reshaped data
+ggplot(data = activityM_long, aes(x = TotalMinutesAsleep, y = ActivityMinutes, color = ActivityType)) +
+  geom_point( alpha = 0.4) +
+  geom_smooth(method = "auto", aes(color = ActivityType), size = 1.25, se = FALSE) +  # Color code the smoothed lines
+  labs(
+    title = "Total Time Asleep vs Activity Minutes by Type",
+    caption = "Period 04.12.2016 to 05.12.2016 Daily",
+    x = "Total Minutes Asleep",
+    y = "Activity Minutes"
+  ) +
+  theme_minimal()
+```
+
+####Total Time Asleep vs Very Active DISTANCE Faily Lightly sedentary (one-by-one)
+```{r}
+ggplot(data = daily_merged_B, aes(x = TotalMinutesAsleep, y = VeryActiveDistance, color=factor(Id))) + #replace y axis
+  geom_point() +
+  geom_smooth(method="auto", se = FALSE, color = "black") +
+  labs(
+    title = "Total Time Asleep vs Very Active Distance (km)",
+    #title = "Total Time Asleep vs Moderately Active Distance (km)",
+    #title = "Total Time Asleep vs Lightly Active Distance (km)",
+    #title = "Total Time Asleep vs Sedentary Active Distance (km)",
+    caption ="Period 04.12.2016 to 05.12.2016 Daily"
+  ) +
+  theme_minimal()
+```
+####Total Time Asleep vs Very Active DISTANCE, Faily, Lightly, sedentary (in one)
+```{r}
+activityD_long <- daily_merged_B %>%
+  select(Id, TotalMinutesAsleep, VeryActiveDistance, ModeratelyActiveDistance, LightActiveDistance, SedentaryActiveDistance) %>%
+  pivot_longer(cols = c(VeryActiveDistance, ModeratelyActiveDistance, LightActiveDistance, SedentaryActiveDistance),
+               names_to = "ActivityTypeDistance", values_to = "ActivityDistance")
+
+# Plot with reshaped data
+ggplot(data = activityD_long, aes(x = TotalMinutesAsleep, y = ActivityDistance, color = ActivityTypeDistance)) +
+  geom_point( alpha = 0.4) +
+  geom_smooth(method = "auto", aes(color = ActivityTypeDistance), size = 1.25, se = FALSE) +  # Color code the smoothed lines
+  labs(
+    title = "Total Time Asleep vs Activity Distance by Type",
+    caption = "Period 04.12.2016 to 05.12.2016 Daily",
+    x = "Total Minutes Asleep",
+    y = "Activity Distance (km)"
+  ) +
+  theme_minimal()
+```
+
+
+####Relationship betweeen total steps and total calories
+```{r}
+ggplot(data=daily_merged_B, aes(x=Calories, y=TotalSteps, color=factor(Id)))+
+  geom_point()+
+  geom_smooth(method = "lm", se = FALSE, color = "black") +  # Adds a linear regression line
+  #facet_wrap(~ Id, scales = "fixed", ncol = 5) #if want hiwahiwalay
+  labs(
+    title="Total Calories Burned vs Total Steps",
+    caption="Period: 04/12/2016 to 05/12/2016 Daily",
+    x = "Total Calories Burned"
+  ) +
+  theme_minimal()
+```
+####Total calories vs Very Active MINUTES Faily Lightly sedentary (one-by-one)
+```{r}
+ggplot(data = daily_merged_B, aes(x = Calories, y = VeryActiveMinutes, color=factor(Id))) + #replace y axis
+  geom_point() +
+  geom_smooth(method="auto", se = FALSE, color = "black") +
+  labs(
+    title = "Total Calories Burned vs Very Active Minutes",
+    #title = "Total Calories Burned vs Faily Active Minutes",
+    #title = "Total Calories Burned vs Lightly Active Minutes",
+    #title = "Total Calories Burned vs Sedentary Minutes",
+    caption ="Period 04.12.2016 to 05.12.2016 Daily",
+    x = "Total Calories Burned"
+  ) +
+  theme_minimal()
+```
+
+####Total calories vs Very Active MINUTES, Faily, Lightly, sedentary (in one)
+```{r}
+activityCalM_long <- daily_merged_B %>%
+  select(Id, Calories, VeryActiveMinutes, FairlyActiveMinutes, LightlyActiveMinutes, SedentaryMinutes) %>%
+  pivot_longer(cols = c(VeryActiveMinutes, FairlyActiveMinutes, LightlyActiveMinutes, SedentaryMinutes),
+               names_to = "ActivityType", values_to = "ActivityMinutes")
+
+# Plot with reshaped data
+ggplot(data = activityCalM_long, aes(x = Calories, y = ActivityMinutes, color = ActivityType)) +
+  geom_point( alpha = 0.1) +
+  geom_smooth(method = "auto", aes(color = ActivityType), size = 1.25, se = FALSE) +  # Color code the smoothed lines
+  labs(
+    title = "Total Calories Burned vs Activity Minutes by Type",
+    caption = "Period 04.12.2016 to 05.12.2016 Daily",
+    x = "Total Calories Burned",
+    y = "Activity Minutes"
+  ) +
+  theme_minimal()
+```
+
+####Total CALORIES vs Very Active DISTANCE Faily Lightly sedentary (one-by-one)
+```{r}
+ggplot(data = daily_merged_B, aes(x = Calories, y = SedentaryActiveDistance, color=factor(Id))) + #replace y axis
+  geom_point() +
+  geom_smooth(method="auto", se = FALSE, color = "black") +
+  labs(
+    #title = "Total Calories Burned vs Very Active Distance (km)",
+    #title = "Total Calories Burned vs Moderately Active Distance (km)",
+    #title = "Total Calories Burned vs Lightly Active Distance (km)",
+    title = "Total Calories Burned vs Sedentary Active Distance (km)",
+    caption ="Period 04.12.2016 to 05.12.2016 Daily",
+    x = "Total Calories Burned"
+  ) +
+  theme_minimal()
+```
+####Total CALORIES vs Very Active DISTANCE, Faily, Lightly, sedentary (in one)
+```{r}
+activitycalD_long <- daily_merged_B %>%
+  select(Id, Calories, VeryActiveDistance, ModeratelyActiveDistance, LightActiveDistance, SedentaryActiveDistance) %>%
+  pivot_longer(cols = c(VeryActiveDistance, ModeratelyActiveDistance, LightActiveDistance, SedentaryActiveDistance),
+               names_to = "ActivityTypeDistance", values_to = "ActivityDistance")
+
+# Plot with reshaped data
+ggplot(data = activitycalD_long, aes(x = Calories, y = ActivityDistance, color = ActivityTypeDistance)) +
+  geom_point( alpha = 0.1) +
+  geom_smooth(method = "auto", aes(color = ActivityTypeDistance), size = 1.25, se = FALSE) +  # Color code the smoothed lines
+  labs(
+    title = "Total Calories Burned vs Activity Distance by Type",
+    caption = "Period 04.12.2016 to 05.12.2016 Daily",
+    x = "Total Calories Burned",
+    y = "Activity Distance (km)"
+  ) +
+  theme_minimal()
+```
+
+##HOURLY
+###HOURLY-LOAD
+```{r}
+hourly_calories_B <- read.csv("D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/HOURLY/hourlyCalories_merged_4.12.16-5.12.16.csv", stringsAsFactors = FALSE)
+hourly_Intensities_B <- read.csv("D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/HOURLY/hourlyIntensities_merged_4.12.16-5.12.16.csv", stringsAsFactors = FALSE)
+hourly_steps_B <- read.csv("D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/HOURLY/hourlySteps_merged_4.12.16-5.12.16.csv", stringsAsFactors = FALSE)
+```
+Hourly Merge
+```{r}
+# First merge calories and intensities
+hourly_activity <- merge(hourly_calories_B, 
+                         hourly_Intensities_B, 
+                         by = c("Id", "ActivityHour"),
+                         all = TRUE)
+
+# Then merge with steps
+hourly_activity <- merge(hourly_activity, 
+                         hourly_steps_B, 
+                         by = c("Id", "ActivityHour"),
+                         all = TRUE)
+
+# Rename the datetime column
+hourly_activity <- hourly_activity %>%
+  rename(DateHour = ActivityHour)
+
+write.csv(hourly_activity, "D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/CLEANED/hourly_activity_merged.csv", row.names = FALSE)
+```
+####HOURLY CLEAN
+head()
+```{r}
+head(hourly_activity)
+#Findings - ActivityDate is chr not datetime format
+```
+Number of Unique participants:
+```{r}
+n_distinct(hourly_activity)
+```
+####Clean ->
+remove duplicated rows:
+```{r}
+hourly_activity <- hourly_activity[!duplicated(hourly_activity), ]
+#no duplicated values found
+```
+Handle missing values:
+```{r}
+colSums(is.na(hourly_activity))
+#no missing values found
+```
+Convert data types:
+```{r}
+library(lubridate)
+
+# Convert DateHour to POSIXct format (for "MM/DD/YYYY h:mm:ss AM/PM")
+hourly_activity$DateHour <- mdy_hms(hourly_activity$DateHour)
+
+# Check the result
+head(hourly_activity$DateHour)
+```
+
+Quick Summary Stats:
+```{r}
+summary_hourly_activity <- hourly_activity %>%
+    summary()
+
+print(summary_hourly_activity)
+```
+SAVE Quick Summary Stats:
+```{r}
+write.csv(summary_hourly_activity, "D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/CLEANED/summary_hourly_activity_merged.csv", row.names = FALSE)
+```
+
+###HOURLY-EXPLORATION & VISUALIZATION
+####Separate Date and Time
+```{r}
+hourly_activity_timed <- hourly_activity %>%
+  mutate(
+    Date = as.Date(DateHour),   # Extract the date part
+    Time = format(DateHour, "%H:%M:%S")   # Extract the time part (in HH:MM:SS format)
+  )
+
+hourly_activity_timed$Time <- as_hms(hourly_activity_timed$Time)
+```
+check
+```{r}
+# Check the result
+head(hourly_activity_timed)
+```
+####PER HOUR total STEPS
+```{r}
+ggplot(hourly_activity_timed, aes(x = Time, y = StepTotal, color = factor(Id))) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "auto", size = 1.25, color = "black", se = FALSE) +
+  labs(
+    title = "Total Steps by Time of Day",
+    x = "Time",
+    y = "Total Steps",
+    color = "User ID",
+    caption = "Period: 4.12.2016 to 5.12.2016 Hourly"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1)  # Rotate x-axis labels by 90 degrees
+  )
+```
+
+####PER HOUR total INTENSITIES
+```{r}
+ggplot(hourly_activity_timed, aes(x = Time, y = TotalIntensity, color = factor(Id))) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "auto", size = 1.25, color = "black", se = FALSE) +
+  labs(
+    title = "Total Activity Intensity by Time of Day",
+    x = "Time",
+    y = "Total Intensity",
+    color = "User ID",
+    caption = "Period: 4.12.2016 to 5.12.2016 Hourly"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1)  # Rotate x-axis labels by 90 degrees
+  )
+```
+
+####PER HOUR total CALORIES
+```{r}
+ggplot(hourly_activity_timed, aes(x = Time, y = Calories, color = factor(Id))) +
+  geom_point(alpha = 0.3) +
+  geom_smooth(method = "auto", size = 1.25, color = "black", se = FALSE) +
+  labs(
+    title = "Total Calories Burned by Time of Day",
+    x = "Time",
+    y = "Total Calories",
+    color = "User ID",
+    caption = "Period: 4.12.2016 to 5.12.2016 Hourly"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1)  # Rotate x-axis labels by 90 degrees
+  )
+```
+
+
+###MINUTE - LOAD HEART RATE
+```{r}
+secs_heartRate <- read.csv("D:/Users/rjlde/Documents/+STUDY FILES+/2025 CASE STUDIES/CASE STUDY 2/RPROJ/CSV/SECOND/heartrate_seconds_merged_4.12.16-5.12.16.csv", stringsAsFactors = FALSE)
+```
+
+####MINUTE CLEAN
+head()
+```{r}
+head(secs_heartRate)
+#Findings - Time is chr not datetime format
+```
+
+remove duplicated rows:
+```{r}
+secs_heartRate <- secs_heartRate[!duplicated(secs_heartRate), ]
+#no duplicated values found
+```
+Handle missing values:
+```{r}
+colSums(is.na(secs_heartRate))
+#no missing values found
+```
+Convert data types:
+```{r}
+library(lubridate)
+
+# Convert Time to POSIXct format (for "MM/DD/YYYY hh:mm:ss AM/PM")
+secs_heartRate$Time <- mdy_hms(secs_heartRate$Time)
+
+# Check the result
+head(secs_heartRate)
+```
+```{r}
+n_distinct(secs_heartRate$Id)
+```
+####add column taking hours
+```{r}
+secs_heartRate$Hour <- format(secs_heartRate$Time, "%H")
+```
+
+```{r}
+head(secs_heartRate)
+```
+
+group by hour and user id
+```{r}
+avg_hrtRate_per_user <- secs_heartRate %>%
+  group_by(Id, Hour) %>%
+  summarise(avg_heart_rate = mean(Value, na.rm = TRUE)) %>%
+  ungroup()
+```
+####PLOT heart rate by time-of-day
+```{r}
+ggplot(avg_hrtRate_per_user, aes(x = as.numeric(Hour), y = avg_heart_rate, color=factor(Id))) +
+  geom_point(alpha = 0.5) +
+  geom_smooth(aes(group = 1), method = "loess", se = FALSE, color = "black", size = 1.2) +
+  scale_x_continuous(breaks = 0:23) +
+  labs(title = "Average Heart Rate by Time-of-Day",
+       x = "Hour of Day",
+       y = "Average Heart Rate") +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank())
+```
+
+
